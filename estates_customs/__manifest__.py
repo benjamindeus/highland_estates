@@ -1,5 +1,5 @@
 {
-    'name': 'Estates Odoo 18 Modifications',
+    'name': 'Highland Estates',
     'version': '1.1',
     'category': 'Accounting',
     'summary': 'Estates Odoo 18 Modifications',
