@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+	<template id="report_custom_delivery_note_loading_instruction_template">
+		<t t-call="web.html_container">
+				<t t-foreach="docs" t-as="doc">
+				<div class="page">
+					<h1 style="text-align: center;">Delivery Note</h1>
+					<br/>
+
+					<!-- Header -->
+					<table style="width: 100%;  margin-bottom: 20px;">
+						<tr>
+							<td style="width: 30%;">
+								<img t-if="res_company.logo" t-att-src="image_data_uri(res_company.logo)" style="max-height: 100px;" />
+							</td>
+							<td style="text-align: center;">
+								<h2>DN No: <span t-field="doc.name"/></h2>
+							</td>
+						</tr>
+					</table>
+					<table width="100%">
+						<tr>
+							<td style="width: 50%;"><strong>Transporter Name:</strong><span t-field="doc.transporter_company"/></td>
+							<td style="width: 50%;"><strong>Driver License:</strong><span t-field="doc.driver_license"/></td>
+						</tr>
+						<tr>
+							 <td style="width: 50%;">
+								<strong>Customer:</strong><span t-field="doc.partner_id.name"/>
+							 </td>
+							<td style="width: 50%;">
+								<strong>Truck Number:</strong> <span t-field="doc.truck_number"/>
+							</td>
+						</tr>
+						<tr>
+							 <td style="width: 50%;">
+								<strong>Order No:</strong> <span t-field="doc.origin"/>
+							</td>
+							 <td style="width: 50%;">
+								<strong>Trailer Number:</strong><span t-field="doc.trailer_number"/>
+							 </td>
+						</tr>
+						<tr>
+							<td style="width: 50%;">
+							<strong>Time Started Loading:</strong><span t-field="doc.scheduled_date"/></td>
+							 <td style="width: 50%;"><strong>LPO N0:</strong><span t-field="doc.lpo_number"/></td>
+						</tr>
+						<tr>
+							<td style="width: 50%;">
+							<strong>Time Finished Loading:</strong><span t-field="doc.date_deadline"/></td>
+							 <td style="width: 50%;"><strong>INVOICE N0:</strong><span t-field="doc.invoice_id.name"/></td>
+						</tr>
+					</table>
+
+					<h3>Products to Load</h3>
+					<t t-set="total_bags" t-value="0"/>
+					<t t-set="total_weight" t-value="0"/>
+					<table width="100%" style="border-collapse: collapse; width: 100%;" border="1">
+						<thead>
+							<tr style="height: 50px;">
+								<th style="border: 1px solid black; padding: 5px;">Product</th>
+								<th style="border: 1px solid black; padding: 5px;">Qty</th>
+								<th style="border: 1px solid black; padding: 5px;">Pack Size</th>
+								<th style="border: 1px solid black; padding: 5px;">Weight</th>
+								<th style="border: 1px solid black; padding: 5px;" width="20%">Remarks</th>
+							</tr>
+						</thead>
+						<tbody>
+							<t t-foreach="doc.move_ids_without_package" t-as="move">
+								<tr style="height: 50px;">
+									<td style="border: 1px solid black; padding: 5px;"><span t-field="move.product_id.name"/></td>
+									<td style="border: 1px solid black; padding: 5px;">
+										<span t-field="move.quantity"/><br/>Bags
+										<t t-set="total_bags" t-value="total_bags + move.quantity"/>
+									</td>
+									<td style="border: 1px solid black; padding: 5px;">
+										<span t-field="move.product_uom.name"/>
+									</td>
+									<td style="border: 1px solid black; padding: 5px;">
+										<!-- Get weight per bag from product (e.g., product.weight) -->
+										<t t-set="weight_per_bag_kg" t-value="move.product_id.weight"/>
+										<!-- Calculate total weight in kg -->
+										<t t-set="total_kg" t-value="move.quantity * weight_per_bag_kg"/>
+										<!-- Convert kg to tonnes -->
+										<t t-set="total_tonnes_line" t-value="total_kg / 1000.0"/>
+										<!-- Display formatted tonnes -->
+										<t t-esc="total_tonnes_line"/>
+										<br/><p>Tonne</p>
+										<!-- Accumulate total -->
+										<t t-set="total_weight" t-value="total_weight + total_tonnes_line"/>
+									</td>
+									<td style="border: 1px solid black; padding: 5px;"></td>
+								</tr>
+							</t>
+							<!-- Total Row -->
+							<tr style="height: 50px;">
+								<td style="border: 1px solid black; padding: 5px; font-weight: bold;">Total</td>
+								<td style="border: 1px solid black; padding: 5px; font-weight: bold;">
+									<t t-esc="total_bags"/>
+								</td>
+								<td style="border: 1px solid black;"></td>
+								<td style="border: 1px solid black; padding: 5px; font-weight: bold;">
+									<t t-esc="total_weight"/>
+								</td>
+								<td style="border: 1px solid black;"></td>
+							</tr>
+						</tbody>
+					</table>
+
+
+                    <div style="margin-top: 40px;">
+                        <table style="width: 100%; border-collapse: collapse; border: 1px solid black;">
+							<tr style="height: 30px; border-collapse: collapse; border: 1px solid black;" colspan="2">
+								<td>GOODS RECEIVED IN GOOD ORDER AND CONDITION</td>
+								<td></td>
+							</tr>
+                            <tr style="height: 30px; border-collapse: collapse; border: 1px solid black;">
+                                <td style="border: 1px solid black; width:50%;">
+                                   <strong>Driver Signature</strong>
+                                </td>
+                                <td style="border: 1px solid black; width:50%;">
+
+                                </td>
+
+                            </tr>
+							<tr style="height: 30px; border-collapse: collapse; border: 1px solid black;">
+                                <td style="border: 1px solid black; width:50%;">
+                                   <strong>Driver Name</strong>
+                                </td>
+                                <td style="border: 1px solid black; width:50%;">
+									<span t-field="doc.driver_name"/>
+                                </td>
+
+                            </tr>
+							<tr style="height: 30px; border-collapse: collapse; border: 1px solid black;">
+                                <td style="border: 1px solid black; width:50%;">
+                                   <strong>Driver License No</strong>
+                                </td>
+                                <td style="border: 1px solid black; width:50%;">
+									<span t-field="doc.driver_license"/>
+                                </td>
+
+                            </tr>
+							<tr style="height: 30px; border-collapse: collapse; border: 1px solid black;">
+                                <td style="border: 1px solid black; width:50%;">
+                                   <strong>Driver Mobile No</strong>
+                                </td>
+                                <td style="border: 1px solid black; width:50%;">
+									<span t-field="doc.driver_phone"/>
+                                </td>
+
+                            </tr>
+                            <tr style="height: 30px; border-collapse: collapse; border: 1px solid black;">
+                                <td style="border: 1px solid black; width:50%;">
+                                   <strong>Date Of Receipt</strong>
+								</td>
+                                <td style="border: 1px solid black; width:50%;">
+                                </td>
+                            </tr>
+							<tr style="height: 30px; border-collapse: collapse; border: 1px solid black;">
+                                <td style="border: 1px solid black; width:50%;">
+                                   <strong>Customer Name:</strong>
+								</td>
+                                <td style="border: 1px solid black; width:50%;">
+									<span t-field="doc.partner_id.name"/>
+                                </td>
+                            </tr>
+							<tr style="height: 30px; border-collapse: collapse; border: 1px solid black;">
+                                <td style="border: 1px solid black; width:50%;">
+                                   <strong>Customer Signature:</strong>
+								</td>
+                                <td style="border: 1px solid black; width:50%;">
+
+                                </td>
+                            </tr>
+							<tr style="height: 30px; border-collapse: collapse; border: 1px solid black;">
+                                <td style="border: 1px solid black; width:50%;">
+                                   <strong>On Behalf Of Customer:</strong>
+								</td>
+                                <td style="border: 1px solid black; width:50%;">
+
+                                </td>
+                            </tr>
+							<tr style="height: 30px; border-collapse: collapse; border: 1px solid black;">
+                                <td style="border: 1px solid black; width:50%;">
+                                   <strong>Dispatch Officer Name:</strong>
+								</td>
+                                <td style="border: 1px solid black; width:50%;">
+									<span t-field="doc.supervisor_id.name"/>
+                                </td>
+                            </tr>
+							<tr style="height: 30px; border-collapse: collapse; border: 1px solid black;">
+                                <td style="border: 1px solid black; width:50%;">
+                                   <strong>Dispatch Officer Signature:</strong>
+								</td>
+                                <td style="border: 1px solid black; width:50%;">
+
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+					<div style="margin-top: 20px;">
+						<p>OUR <span t-field="res_company.name"/>  GENERATION CONDITIONS OF SALES AS PER</p>
+						<p>OVERLEAF ARE APPLICABLE</p>
+<!-- 						<p><strong><span t-field="res_company.name"/></strong></p> -->
+                        <table width="100%">
+                            <tr>
+                                <td style="width: 50%;">
+                                   <strong>Postal Address:</strong>
+                                </td>
+                                <td style="width: 50%;">
+                                   <strong>Office Address:</strong>
+                                </td>
+                            </tr>
+							<tr>
+                                <td style="width: 50%;">
+                                   <span t-field="res_company.street"/>
+                                </td>
+                                <td style="width: 50%;">
+                                   <span t-field="res_company.street"/>
+                                </td>
+                            </tr>
+							<tr>
+                                <td style="width: 50%;">
+                                   <span t-field="res_company.city"/>
+                                </td>
+                                <td style="width: 50%;">
+                                   Fax
+                                </td>
+                            </tr>
+							<tr>
+                                <td style="width: 50%;">
+                                   <span t-field="res_company.country_id.name"/>
+                                </td>
+                                <td style="width: 50%;">
+                                   Telephone: <span t-field="res_company.phone"/>
+                                </td>
+                            </tr>
+							<tr>
+                                <td style="width: 50%;">
+
+                                </td>
+                                <td style="width: 50%;">
+                                   TIN: <span t-field="res_company.company_registry"/>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+				</div>
+			</t>
+			</t>
+	</template>
+
+    <!-- Report Action -->
+    <record id="action_report_custom_delivery_note_loading_instructions_id_card" model="ir.actions.report">
+        <field name="name">Estates Delivery Note</field>
+        <field name="model">stock.picking</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">estates_customs.report_custom_delivery_note_loading_instruction_template</field>
+        <field name="print_report_name">"Delivery Note - %s" % object.name</field>
+        <field name="binding_model_id" ref="model_stock_picking"/>
+		<field name="paperformat_id" ref="estates_customs.report_estates_paperformat_a4_portrait"/>
+    </record>
+
+
+</odoo>

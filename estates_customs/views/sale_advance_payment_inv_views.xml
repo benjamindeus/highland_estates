@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sale_advance_payment_inv_custom_form" model="ir.ui.view">
+        <field name="name">sale.advance.payment.inv.form.custom</field>
+        <field name="model">sale.advance.payment.inv</field>
+        <field name="inherit_id" ref="sale.view_sale_advance_payment_inv"/>
+        <field name="arch" type="xml">
+
+                <!-- Show original content -->
+                <xpath expr="//field[@name='advance_payment_method']" position="after">
+                    <separator string="Custom Invoice Options"/>
+                    <field name="picking_id" required="1"/>
+                    <field name="lpo_number" invisible="1"/>
+                </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,73 @@
+<odoo>
+    <data noupdate="1">
+		<record id="email_template_so_approval_all_levels" model="mail.template">
+			<field name="name">SO - Approval Request</field>
+			<field name="model_id" ref="estates_customs.model_sale_order"/>
+			<field name="subject">Approval Required: {{ object.name }}</field>
+			<field name="body_html" type="html">
+		<div style="font-family: Arial; font-size: 14px;">
+			<p>Dear <span t-esc="ctx.get('name')"/>,</p>
+
+			<p>The sales order "<strong><span t-field="object.name"/></strong>" has been submitted for approval.</p>
+
+			<p><a t-att-href="object._get_share_url()" style="color: #0078D7;">Click here to review and approve/reject.</a></p>
+
+			<p>Submitted by: <span t-esc="ctx.get('user')"/></p>
+			<p>Date: <span t-esc="ctx.get('date')"/></p>
+
+			<br/>
+			<p>Thank you,<br/>
+			   <strong> <span t-esc="ctx.get('company_name')"/></strong></p>
+		</div>
+			</field>
+			<field name="auto_delete" eval="True"/>
+		</record>
+
+		<record id="email_template_delivery_approval_all_levels_new" model="mail.template">
+			<field name="name">Delivery - Approval Request</field>
+			<field name="model_id" ref="estates_customs.model_stock_picking"/>
+			<field name="subject">Approval Required: {{ object.name }}</field>
+			<field name="body_html" type="html">
+				<div style="font-size: 14px;">
+					<p>Dear <span t-esc="ctx.get('name')"/>,</p>
+
+					<p>The Stock picking "<strong><span t-esc="ctx.get('ref')"/></strong>" has been submitted for approval.</p>
+
+					<p><a t-att-href="object._get_share_url()" style="color: #0078D7;">Click here to review and approve/reject.</a></p>
+
+					<p>Submitted by: <span t-esc="ctx.get('user')"/></p>
+					<p>Date: <span t-esc="ctx.get('date')"/></p>
+
+					<br/>
+					<p>Thank you,<br/>
+						<strong> <span t-esc="ctx.get('company_name')"/></strong></p>
+				</div>
+			</field>
+			<field name="auto_delete" eval="True"/>
+		</record>
+
+		<record id="email_template_so_rejected" model="mail.template">
+			<field name="name">SO - Rejected</field>
+			<field name="model_id" ref="model_sale_order"/>
+			<field name="subject">Sales Order "{{ object.name }}" Was Rejected</field>
+			<field name="email_from">{{ user.email_formatted | safe }}</field>
+			<field name="body_html" type="html">
+		<div style="font-family: Arial; font-size: 14px;">
+			<p>Dear <span t-field="object.user_id.name"/>,</p>
+
+			<p>Your sales order "<strong><span t-field="object.name"/></strong>" was rejected by <strong><span t-field="object.current_approver_id.name"/></strong>.</p>
+
+			<p><strong>Reason:</strong> ${object.reject_reason or 'No reason provided.'}</p>
+
+			<p><a t-att-href="object._get_share_url()" style="color: #0078D7;">Click here to edit and resubmit.</a></p>
+
+			<br/>
+			<p>Thank you,<br/>
+			   <strong>{{ object.company_id.name }}</strong></p>
+		</div>
+			</field>
+			<field name="auto_delete" eval="True"/>
+		</record>
+
+	</data>
+</odoo>
