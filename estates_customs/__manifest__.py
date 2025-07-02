@@ -1,6 +1,6 @@
 {
     'name': 'Estates Odoo 18 Modifications',
-    'version': '18.0.1.0.0',
+    'version': '18.0',
     'category': 'Accounting',
     'summary': 'Estates Odoo 18 Modifications',
     'description': 'Estates Odoo 18 Modifications',
