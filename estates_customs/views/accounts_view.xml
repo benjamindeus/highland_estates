@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="invoice_form_tra_vfd_functionalities" model="ir.ui.view">
+            <field name="name">account.move.form.efd</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="arch" type="xml">
+				<xpath expr="//header" position="inside">
+					<button name="generate_efd_tra_receipt_please" type="object" string="Generate EFD Receipt"
+						invisible = "is_vfd_issues or state != 'posted'" class="btn-primary"/>
+				</xpath>
+				<xpath expr="//field[@name='invoice_date']" position="before">
+					<field name="lpo_number"/>
+					<field name="picking_id" readonly="1"/>
+				</xpath>
+				<xpath  expr="//notebook" position="inside">
+					<page string="VFD Integration" name="vfd_enhancements">
+<!-- 						invisible="state != 'posted' or is_being_sent or invoice_pdf_report_id or move_type not in ('out_invoice', 'out_refund')"  -->
+						<group>
+							<group>
+								<field name="is_vfd_issues" invisible="1" readonly="1"/>
+								<field name="vfd_qrcode_url" readonly="1" invisible = "not is_vfd_issues"/>
+								<field name="vfd_receipt_no" readonly="1" invisible = "not is_vfd_issues"/>
+								<field name="vfd_qr_code" widget="image" readonly="1" invisible = "not is_vfd_issues"/>
+								<button name="generate_efd_tra_receipt_please" type="object" string="Generate EFD Receipt" class="btn-primary" invisible = "is_vfd_issues or state != 'posted'"/>
+							</group>
+							<group>
+								<field name="tra_qrcode_url" widget="link" readonly="1"/>
+								<field name="vfd_log_message" readonly="1"/>
+
+							</group>
+						</group>
+					</page>
+
+
+				</xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

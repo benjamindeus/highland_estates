@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_partner_estetes_external_fields_for_customer_inherit_form" model="ir.ui.view">
+        <field name="name">res.partner.estates.inherit.form</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='vat']" position="after">
+				<field name="is_efd_vrn_registered"/>
+				<field name="efd_vrn_number" invisible="not is_efd_vrn_registered" required="is_efd_vrn_registered"/>
+            </xpath>
+        </field>
+    </record>
+	<record id="view_order_estates_company_form_inherit" model="ir.ui.view">
+		<field name="name">sale.order.form.inherit</field>
+		<field name="model">sale.order</field>
+		<field name="inherit_id" ref="sale.view_order_form"/>
+		<field name="arch" type="xml">
+			<xpath expr="//header" position="inside">
+				<button name="action_request_approval"
+						string="Request For Approval"
+						type="object"
+						invisible ="approval_status != 'draft'"
+						class="btn-primary"/>
+				<button name="action_approve"
+						string="Verify And Approve"
+						type="object"
+						invisible ="approval_status in ['draft','approved','rejected']"
+						class="btn-primary"/>
+				<button name="action_reset_to_draft"
+						string="Reset to Draft"
+						type="object"
+						invisible ="approval_status != 'rejected'"
+						class="btn-danger"/>
+			</xpath>
+			<xpath expr="//field[@name='date_order']" position="after">
+				<field name="lpo_number"/>
+				<field name="approval_status" readonly="1" widget="badge"/>
+
+            </xpath>
+			<xpath expr="//notebook" position="inside">
+				<page string="Approvals">
+					<group string="Approvals">
+						<group>
+							<field name="current_approver_id" />
+							<field name="level1_approved_by" />
+							<field name="level2_approved_by" />
+							<field name="level3_approved_by"/>
+							<field name="reject_reason" readonly="1"/>
+						</group>
+						<group></group>
+					</group>
+
+				</page>
+            </xpath>
+		</field>
+	</record>
+
+
+	<record id="view_picking_form_inherit_estates_delivery_details" model="ir.ui.view">
+		<field name="name">stock.picking.form.inherit.delivery.details</field>
+		<field name="model">stock.picking</field>
+		<field name="inherit_id" ref="stock.view_picking_form"/>
+		<field name="arch" type="xml">
+			        <!-- Show linked invoice -->
+			<xpath expr="//sheet" position="before">
+				<div class="oe_right oe_button_box" style="margin-top: 10px;">
+					<field name="invoice_id" widget="many2one_avatar_company"/>
+				</div>
+			</xpath>
+			<xpath expr="//header" position="inside">
+<!-- 				<button string="Create Invoice" type="object" name="action_open_invoice_wizard" -->
+<!--                     invisible="state != 'done' or invoice_id != False" class="btn-primary"/> -->
+            	<button name="print_loading_instruction" string="Print Loading Instruction"
+						type="object" class="btn btn-primary fa fa-print"/>
+
+
+				<button name="action_request_approval"
+						string="Request For Approval"
+						type="object"
+						invisible ="approval_status != 'draft'"
+						class="btn-primary"/>
+				<button name="action_approve"
+						string="Verify And Approve"
+						type="object"
+						invisible ="approval_status in ['draft','approved','rejected']"
+						class="btn-primary"/>
+				<button name="action_reset_to_draft"
+						string="Reset to Draft"
+						type="object"
+						invisible ="approval_status != 'rejected'"
+						class="btn-danger"/>
+        	</xpath>
+			<xpath expr="//field[@name='origin']" position="after">
+				<field name="lpo_number"/>
+				<field name="approval_status" readonly="1" widget="badge"/>
+
+            </xpath>
+
+
+			<xpath expr="//notebook" position="inside">
+				<page string="Loading Details">
+					<group string="invoice">
+						<field name="invoice_id" placeholder="Invoice ID" readonly="1"/>
+					</group>
+					<group string="Delivery Driver Info">
+						<group string="Driver Info">
+							<field name="driver_name" placeholder="Driver Name"/>
+							<field name="driver_license" placeholder="Driver License"/>
+							<field name="driver_phone" placeholder="Driver Phone"/>
+						</group>
+						<group string="Truck Info">
+							<field name="transporter_company" placeholder="Transporter Company"/>
+							<field name="truck_number" placeholder="Truck Number"/>
+							<field name="trailer_number" placeholder="Trailer Number"/>
+							<field name="loading_pattern" placeholder="Loading Pattern"/>
+						</group>
+						<group string="Remarks">
+							<field name="remarks" placeholder="Remarks"/>
+						</group>
+						<group string="Supervisor">
+							<field name="supervisor_id" placeholder="Supervisor"/>
+						</group>
+						<group string="Loading Pattern">
+							<field name="loading_pattern" placeholder="Loading Pattern"/>
+						</group>
+					</group>
+				</page>
+				<page string="Approvals">
+					<group string="Approvals">
+						<group>
+							<field name="current_approver_id" />
+							<field name="level1_approved_by" />
+							<field name="level2_approved_by" />
+							<field name="level3_approved_by"/>
+							<field name="reject_reason" readonly="1"/>
+						</group>
+						<group></group>
+					</group>
+
+				</page>
+			</xpath>
+		</field>
+	</record>
+</odoo>

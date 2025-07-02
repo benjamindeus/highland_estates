@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+	<record id="report_estates_paperformat_a4_portrait" model="report.paperformat">
+        <field name="name">A4 Portrait</field>
+        <field name="default" eval="True"/>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">10</field>
+        <field name="margin_right">10</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+    </record>
+	<template id="report_loading_instruction_template">
+		<t t-call="web.html_container">
+				<t t-foreach="docs" t-as="doc">
+				<div class="page">
+					<h1 style="text-align: center;">Loading Instruction</h1>
+					<br/>
+
+					<!-- Header -->
+					<table style="width: 100%;  margin-bottom: 20px;">
+						<tr>
+							<td style="width: 30%;">
+								<img t-if="res_company.logo" t-att-src="image_data_uri(res_company.logo)" style="max-height: 100px;" />
+							</td>
+							<td style="text-align: center;">
+								<h2>No: <span t-field="doc.name"/></h2>
+							</td>
+						</tr>
+					</table>
+					<table width="100%">
+						<tr>
+							 <td style="width: 50%;">
+								<strong>Order No:</strong> <span t-field="doc.name"/>
+							</td>
+							 <td style="width: 50%;">
+								<strong>Customer:</strong><span t-field="doc.partner_id.name"/></td></tr>
+						<tr> <td style="width: 50%;">
+							<strong>Warehouse:</strong><span t-field="doc.location_id.name"/></td>
+							 <td style="width: 50%;"><strong>Date Time:</strong><span t-field="doc.scheduled_date"/></td></tr>
+						<tr>
+							<td style="width: 50%;"><strong>Transporter Name:</strong><span t-field="doc.transporter_company"/></td>
+							<td style="width: 50%;"><strong>Trailer Number:</strong><span t-field="doc.trailer_number"/></td></tr>
+						<tr>
+							<td style="width: 50%;"><strong>Truck Number:</strong><span t-field="doc.truck_number"/></td> <td style="width: 50%;"><p></p></td></tr>
+					</table>
+
+					<h3>Products to Load</h3>
+					<t t-set="total_bags" t-value="0"/>
+					<t t-set="total_weight" t-value="0"/>
+					<table width="100%" style="border-collapse: collapse; width: 100%;" border="1">
+						<thead>
+							<tr style="height: 50px;">
+								<th style="border: 1px solid black; padding: 5px;">Product</th>
+								<th style="border: 1px solid black; padding: 5px;">Qty</th>
+								<th style="border: 1px solid black; padding: 5px;">Pack Size</th>
+								<th style="border: 1px solid black; padding: 5px;">Weight</th>
+								<th style="border: 1px solid black; padding: 5px;" width="20%">Remarks</th>
+							</tr>
+						</thead>
+						<tbody>
+							<t t-foreach="doc.move_ids_without_package" t-as="move">
+								<tr style="height: 50px;">
+									<td style="border: 1px solid black; padding: 5px;"><span t-field="move.product_id.name"/></td>
+									<td style="border: 1px solid black; padding: 5px;">
+										<span t-field="move.quantity"/><br/>Bags
+										<t t-set="total_bags" t-value="total_bags + move.quantity"/>
+									</td>
+									<td style="border: 1px solid black; padding: 5px;">
+										<span t-field="move.product_uom.name"/>
+									</td>
+									<td style="border: 1px solid black; padding: 5px;">
+										<!-- Get weight per bag from product (e.g., product.weight) -->
+										<t t-set="weight_per_bag_kg" t-value="move.product_id.weight"/>
+										<!-- Calculate total weight in kg -->
+										<t t-set="total_kg" t-value="move.quantity * weight_per_bag_kg"/>
+										<!-- Convert kg to tonnes -->
+										<t t-set="total_tonnes_line" t-value="total_kg / 1000.0"/>
+										<!-- Display formatted tonnes -->
+										<t t-esc="total_tonnes_line"/>
+										<br/><p>Tonne</p>
+										<!-- Accumulate total -->
+										<t t-set="total_weight" t-value="total_weight + total_tonnes_line"/>
+									</td>
+									<td style="border: 1px solid black; padding: 5px;"></td>
+								</tr>
+							</t>
+							<!-- Total Row -->
+							<tr style="height: 50px;">
+								<td style="border: 1px solid black; padding: 5px; font-weight: bold;">Total</td>
+								<td style="border: 1px solid black; padding: 5px; font-weight: bold;">
+									<t t-esc="total_bags"/>
+								</td>
+								<td style="border: 1px solid black;"></td>
+								<td style="border: 1px solid black; padding: 5px; font-weight: bold;">
+									<t t-esc="total_weight"/>
+								</td>
+								<td style="border: 1px solid black;"></td>
+							</tr>
+						</tbody>
+					</table>
+
+
+                    <div style="margin-top: 20px;">
+                        <p><strong>Loading Pattern</strong></p>
+                        <div style="border: 2px dashed #999; height: 200px; padding: 10px; font-size: 14px;">
+
+                        </div>
+                    </div>
+                    <div style="margin-top: 40px;">
+						<p><strong>LOADING COMPLETED</strong></p>
+                        <table width="100%">
+                            <tr>
+                                <td style="width: 50%;">
+                                   <strong>Supervisor:</strong>
+									<span t-field="doc.supervisor_id.name"/>
+                                </td>
+                                <td style="width: 50%;">
+                                   <strong>Driver Name:</strong>
+									<span t-field="doc.driver_name"/>
+                                </td>
+
+                            </tr>
+                            <tr>
+                                <td style="width: 50%;">
+                                   <strong>Signature:</strong>
+									..........................
+								</td>
+                                <td style="width: 50%;">
+                                   <strong>Driver License:</strong>
+									<span t-field="doc.driver_license"/>
+                                </td>
+                            </tr>
+							<tr>
+                                <td style="width: 50%;">
+                                   <strong>Date Time:</strong>
+									..........................
+								</td>
+                                <td style="width: 50%;">
+                                   <strong>Driver Phone:</strong>
+									<span t-field="doc.driver_phone"/>
+                                </td>
+                            </tr>
+							<tr>
+								<td style="width: 50%;">
+
+                                </td>
+                                <td style="width: 50%;">
+                                   <strong>Signature:</strong>
+									..........................
+								</td>
+                            </tr>
+                        </table>
+                    </div>
+					<div style="margin-top: 20px;">
+						<p><strong><span t-field="res_company.name"/></strong></p>
+                        <table width="100%">
+                            <tr>
+                                <td style="width: 50%;">
+                                   <strong>Postal Address:</strong>
+                                </td>
+                                <td style="width: 50%;">
+                                   <strong>Office Address:</strong>
+                                </td>
+                            </tr>
+							<tr>
+                                <td style="width: 50%;">
+                                   <span t-field="res_company.street"/>
+                                </td>
+                                <td style="width: 50%;">
+                                   <span t-field="res_company.street"/>
+                                </td>
+                            </tr>
+							<tr>
+                                <td style="width: 50%;">
+                                   <span t-field="res_company.city"/>
+                                </td>
+                                <td style="width: 50%;">
+                                   Fax
+                                </td>
+                            </tr>
+							<tr>
+                                <td style="width: 50%;">
+                                   <span t-field="res_company.country_id.name"/>
+                                </td>
+                                <td style="width: 50%;">
+                                   Telephone: <span t-field="res_company.phone"/>
+                                </td>
+                            </tr>
+							<tr>
+                                <td style="width: 50%;">
+
+                                </td>
+                                <td style="width: 50%;">
+                                   TIN: <span t-field="res_company.company_registry"/>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+				</div>
+			</t>
+			</t>
+	</template>
+
+    <!-- Report Action -->
+    <record id="action_report_loading_instructions_id_card" model="ir.actions.report">
+        <field name="name">Estates Loading Instructions</field>
+        <field name="model">stock.picking</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">estates_customs.report_loading_instruction_template</field>
+        <field name="print_report_name">"Loading Instructions - %s" % object.name</field>
+        <field name="binding_model_id" ref="model_stock_picking"/>
+		<field name="paperformat_id" ref="estates_customs.report_estates_paperformat_a4_portrait"/>
+    </record>
+
+
+</odoo>

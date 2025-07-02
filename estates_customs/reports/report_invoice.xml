@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+	<record id="report_invoice_paperformat" model="report.paperformat">
+		<field name="name">A4 Portrait - Invoice</field>
+		<field name="default" eval="False"/>
+		<field name="format">A4</field>
+		<field name="orientation">Portrait</field>
+		<field name="margin_top">10</field>
+		<field name="margin_bottom">10</field>
+		<field name="margin_left">10</field>
+		<field name="margin_right">10</field>
+		<field name="header_line" eval="False"/>
+		<field name="header_spacing">0</field>
+	</record>
+    <template id="report_invoice_custom_template_estate">
+        <t t-call="web.html_container">
+           <t t-foreach="docs" t-as="o">
+                <div class="page">
+
+                    <!-- Header -->
+                    <table style="width: 100%; margin-bottom: 20px;">
+                        <tr>
+                            <td style="width: 30%;">
+                                <img t-if="res_company.logo" t-att-src="image_data_uri(res_company.logo)" style="max-height: 100px;" />
+                            </td>
+                            <td style="text-align:right;">
+                                <h2>INVOICE</h2>
+                                <p><strong>Invoice No:</strong> <span t-field="o.name"/></p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Invoice Details -->
+                    <table width="100%">
+                        <tr>
+                            <td style="width: 50%;">
+                                <strong>FROM:</strong><br/><br/>
+                                <span t-field="res_company.name"/><br/>
+                                <span t-field="res_company.street"/><br/>
+                                <span t-field="res_company.city"/>, <span t-field="res_company.country_id.name"/><br/>
+                                <span t-field="res_company.phone"/><br/>
+                                TIN:<span t-field="res_company.vat"/>
+                            </td>
+                            <td style="text-align:right;">
+                                <strong>Billed To:</strong><br/><br/>
+                                <span t-field="o.partner_id.name"/><br/>
+                                <span t-field="o.partner_id.city"/>, <span t-field="o.partner_id.country_id.name"/><br/>
+                                <span t-field="o.partner_id.phone"/><br/>
+                                TIN:<span t-field="o.partner_id.vat"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50%;">
+
+                            </td>
+                            <td style="text-align: right;">
+                                <strong>Invoice Date:</strong> <span t-field="o.invoice_date"/><br/>
+                                <strong>Due Date:</strong> <span t-field="o.invoice_date_due"/><br/>
+                                <strong>Payment Method:</strong> Cash
+                            </td>
+                        </tr>
+                    </table>
+                    <br/>
+                    <!-- Products Table -->
+                    <t t-set="total_qty" t-value="0"/>
+                        <t t-set="display_discount" t-value="any(l.discount for l in o.invoice_line_ids)"/>
+                        <div class="oe_structure"></div>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background-color: black; color: white;">
+                                    <th style="width: 4%; text-align: left; height: 50px;" ><span>#</span></th>
+                                    <th style="text-align: center; height: 50px;" ><span>Item</span></th>
+                                    <th style="text-align: left; height: 50px;"><span>Qty</span></th>
+                                    <th style="text-align: center; height: 50px;"><span>Rate</span></th>
+<!--                                     <th style=" height: 50px;" t-if="display_discount"> -->
+<!--                                         <span>Disc.%</span> -->
+<!--                                     </th> -->
+                                    <th style="text-align: center; height: 50px;"><span>Taxes</span></th>
+                                    <th style="text-align: center; height: 50px;">
+                                        <span>Amount</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="invoice_tbody">
+                                <t t-set="current_counter" t-value="0"/>
+                                <t t-set="current_subtotal" t-value="0"/>
+                                <t t-set="current_total" t-value="0"/>
+                                <t t-set="lines" t-value="o.invoice_line_ids.sorted(key=lambda l: (-l.sequence, l.date, l.move_name, -l.id), reverse=True)"/>
+
+                                <t t-foreach="lines" t-as="line">
+                                    <t t-set="current_counter" t-value="current_counter + 1"/>
+                                    <t t-set="current_subtotal" t-value="current_subtotal + line.price_subtotal"/>
+                                    <t t-set="current_total" t-value="current_total + line.price_total"/>
+
+                                    <tr style="height: 50px; border-bottom: 2px solid #000; color: black;" >
+                                        <t t-if="line.display_type == 'product'" name="account_invoice_line_accountable">
+                                            <td style="width: 4%; text-align: left;">
+                                               <span
+                                                    t-out="current_counter"/>
+                                            </td>
+                                            <td style="text-align: left;">
+                                                <span t-if="line.name" t-field="line.name" t-options="{'widget': 'text'}">Bacon Burger</span>
+                                            </td>
+                                            <td style="text-align: left;">
+                                                <span t-field="line.quantity">3.00</span>
+                                                Bags
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <span class="text-nowrap" t-field="line.price_unit">9.00</span>
+                                            </td>
+<!--                                             <td> -->
+<!--                                                 <span class="text-nowrap" t-field="line.discount">0</span> -->
+<!--                                             </td> -->
+                                            <t t-set="taxes" t-value="', '.join([(tax.invoice_label or tax.name) for tax in line.tax_ids])"/>
+                                            <td style="text-align: center;">
+                                                <span t-out="taxes" id="line_tax_ids">Tax 15%</span>
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <t t-set="formatted_price_subtotal" t-value="'{:,.2f}'.format(line.price_subtotal or 0.0)"/>
+                                                Tsh <span class="text-nowrap" t-out="formatted_price_subtotal"/>
+                                            </td>
+                                        </t>
+                                        <t t-elif="line.display_type == 'line_section'">
+                                            <td colspan="99">
+                                                <span t-if="line.name" t-field="line.name" t-options="{'widget': 'text'}">A section title</span>
+                                            </td>
+                                            <t t-set="current_section" t-value="line"/>
+                                            <t t-set="current_subtotal" t-value="0"/>
+                                        </t>
+                                        <t t-elif="line.display_type == 'line_note'">
+                                            <td colspan="99">
+                                                <span t-if="line.name" t-field="line.name" t-options="{'widget': 'text'}">A note, whose content usually applies to the section or product above.</span>
+                                            </td>
+                                        </t>
+                                    </tr>
+
+                                    <t t-if="current_section and (line_last or lines[line_index+1].display_type == 'line_section')">
+                                        <tr class="is-subtotal text-end">
+                                            <td colspan="99">
+                                                <strong class="mr16">Subtotal</strong>
+                                                   <t t-set="formatted_current_subtotal" t-value="'{:,.2f}'.format(current_subtotal or 0.0)"/>
+                                                   Tsh <span t-out="formatted_current_subtotal"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </t>
+                            </tbody>
+                        </table>
+                       <table style="width: 100%; border-collapse: collapse;">
+                           <tr style="height: 50px; " >
+                               <td style="width: 50%; text-align: left;">
+                                   <span></span>
+                               </td>
+                               <td style="width: 50%; text-align: right; border-bottom: 1px solid #000; color: black;">
+                                   <strong>Sub Total:</strong>
+                                   <t t-set="formatted_current_subtotal" t-value="'{:,.2f}'.format(current_subtotal or 0.0)"/>
+                                   Tsh <span t-out="formatted_current_subtotal"/>
+                               </td>
+                           </tr>
+                           <tr style="height: 50px;" >
+                               <td style="width: 50%; text-align: left;">
+                                   <span></span>
+
+                               </td>
+                               <td style="width: 50%; text-align: right; border-bottom: 1px solid #000; color: black;">
+                                   <strong>Exempt(0%):</strong>
+                                   <t t-set="formatted_amount_tax" t-value="'{:,.2f}'.format(o.amount_tax or 0.0)"/>
+                                   Tsh <span t-out="formatted_amount_tax"/>
+                               </td>
+                           </tr>
+                           <tr style="height: 50px; " >
+                               <td style="width: 50%; text-align: left;">
+
+                               </td>
+                               <td style="width: 50%; text-align: right; border-bottom: 1px solid #000; color: black;">
+                                   <strong>Total:</strong>
+                                   <t t-set="formatted_total" t-value="'{:,.2f}'.format(o.amount_total or 0.0)"/>
+                                   Tsh <span t-out="formatted_total"/>
+                               </td>
+                           </tr>
+                       </table>
+
+                    <div style="margin-top: 20px; width: 100%; display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+                        <!-- Left: Narration -->
+                        <div class="text-muted mb-3"
+                             style="max-width: 70%; text-align: justify; text-justify: inter-word;">
+                            <p style="margin: 0 0 5px 0;"><strong>Client Notes</strong></p>
+                            <span t-field="o.narration"/>
+                        </div>
+
+                        <!-- Right: QR code + info -->
+                        <div style="display: flex; flex-direction: column; align-items: flex-start; flex-shrink: 0; text-align: right; min-width: 200px;">
+                            <p style="margin: 0;">Receipt Date: <span t-field="o.invoice_date"/></p>
+                            <p style="margin: 0;">TRA Verification Code: <span t-field="o.vfd_receipt_no"/></p>
+                            <img t-if="o.vfd_qr_code"
+                                 t-att-src="'data:image/png;base64,%s' % o.vfd_qr_code.decode()"
+                                 style="width: 100px; margin-top: 5px;"/>
+                        </div>
+                    </div>
+
+
+
+<!--                     <div style="margin-top: 20px;"> -->
+<!--                         <table width="100%"> -->
+<!--                             <tr> -->
+<!--                                 <td style="width: 50%;"> -->
+<!--                                    <strong>Prepared By:</strong> <br/><br/> -->
+<!--                                     <span t-field="o.invoice_user_id.name"/> -->
+<!--                                 </td> -->
+<!--                                 <td style="width: 50%; text-align: right;"> -->
+<!--                                    <strong>Signature:</strong> <br/><br/> -->
+<!--                                    ................................................... -->
+<!--                                 </td> -->
+<!--                             </tr> -->
+<!--                         </table> -->
+<!--                     </div> -->
+
+
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Report Action -->
+    <record id="action_report_custom_invoice" model="ir.actions.report">
+        <field name="name">Custom Invoice with QR</field>
+        <field name="model">account.move</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">estates_customs.report_invoice_custom_template_estate</field>
+        <field name="print_report_name">"Invoice - %s" % object.name</field>
+        <field name="binding_model_id" ref="model_account_move"/>
+        <field name="paperformat_id" ref="estates_customs.report_invoice_paperformat"/>
+    </record>
+</odoo>

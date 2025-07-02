@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+	<template id="report_sales_aknowledgement_template">
+		<t t-call="web.html_container">
+				<t t-foreach="docs" t-as="doc">
+				<div class="page">
+
+					<!-- Header -->
+					<table style="width: 100%;  margin-bottom: 20px;">
+						<tr>
+							<td style="width: 30%;">
+								<img t-if="res_company.logo" t-att-src="image_data_uri(res_company.logo)" style="max-height: 100px;" />
+							</td>
+							<td style="text-align: center;">
+								<h2><strong><span t-field="res_company.name"/></strong></h2>
+								<p><span t-field="doc.name"/></p>
+								<p>Sales Acknowledgement</p>
+							</td>
+							<td style="text-align: center;">
+								<h2></h2>
+							</td>
+						</tr>
+					</table>
+                   <!-- Invoice Details -->
+                    <table width="100%">
+                        <tr>
+                            <td style="width: 50%;">
+                                <strong>Acknowledgement Address:</strong><br/>
+                                <span t-field="doc.partner_id.name"/><br/>
+                                <span t-field="doc.partner_id.city"/>, <span t-field="doc.partner_id.country_id.name"/><br/>
+                                <span t-field="doc.partner_id.phone"/><br/>
+                                TIN:<span t-field="doc.partner_id.vat"/>
+
+
+                            </td>
+                            <td style="text-align:right;">
+								Sales Order Reference: <strong><span t-field="doc.name"/></strong><br/>
+								Date: <strong><span t-field="doc.date_order"/></strong><br/><br/>
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50%;">
+                                <strong>Delivery Address:</strong><br/>
+
+                            </td>
+                            <td style="text-align:right;">
+								<strong>Warehouse Address:</strong><br/>
+								<span t-field="doc.warehouse_id.name"/><br/>
+
+                            </td>
+                        </tr>
+                    </table>
+                    <br/>
+                    <br/>
+					<p><strong>Validity:</strong> <span t-field="doc.payment_term_id.name"/> </p><br/>
+					<p><strong>Prepared By:</strong> <span t-field="doc.user_id.name"/> </p><br/>
+					<t t-set="counter" t-value="1"/>
+					<t t-set="total_bags" t-value="0"/>
+					<t t-set="total_weight" t-value="0"/>
+					<table width="100%" style="border-collapse: collapse; width: 100%;" border="1">
+						<thead>
+							<tr style="height: 50px;">
+								<th style="text-align: center; border: 1px solid black; padding: 5px;">Line Number</th>
+								<th style="text-align: center; border: 1px solid black; padding: 5px;">Product</th>
+								<th style="text-align: center; border: 1px solid black; padding: 5px;">Quantity</th>
+								<th style="text-align: center; border: 1px solid black; padding: 5px;">Pack Size</th>
+								<th style="text-align: center; border: 1px solid black; padding: 5px;">Weight</th>
+							</tr>
+						</thead>
+						<tbody>
+							<t t-foreach="doc.order_line" t-as="move">
+								<tr style="height: 50px;">
+									<td style="border: 1px solid black; padding: 5px; text-align: center;"><span t-esc="counter "/></td>
+									<td style="border: 1px solid black; padding: 5px; text-align: center;"><span t-field="move.product_id.name"/></td>
+									<td style="border: 1px solid black; padding: 5px;">
+										<span t-field="move.product_uom_qty"/><br/>Bags
+										<t t-set="total_bags" t-value="total_bags + move.product_uom_qty"/>
+									</td>
+									<td style="border: 1px solid black; padding: 5px;">
+										<span t-field="move.product_uom.name"/>
+									</td>
+									<td style="border: 1px solid black; padding: 5px;">
+										<!-- Get weight per bag from product (e.g., product.weight) -->
+										<t t-set="weight_per_bag_kg" t-value="move.product_id.weight"/>
+										<t t-set="counter" t-value="counter + 1"/>
+										<!-- Calculate total weight in kg -->
+										<t t-set="total_kg" t-value="move.product_uom_qty * weight_per_bag_kg"/>
+										<!-- Convert kg to tonnes -->
+										<t t-set="total_tonnes_line" t-value="total_kg / 1000.0"/>
+										<!-- Display formatted tonnes -->
+										<t t-esc="total_tonnes_line"/>
+										<br/><p>Tonne</p>
+										<!-- Accumulate total -->
+										<t t-set="total_weight" t-value="total_weight + total_tonnes_line"/>
+									</td>
+								</tr>
+							</t>
+							<!-- Total Row -->
+							<tr style="height: 50px;">
+								<td style="border: 1px solid black; padding: 5px; font-weight: bold;"></td>
+								<td style="border: 1px solid black; padding: 5px; font-weight: bold;">Total</td>
+								<td style="border: 1px solid black; padding: 5px; font-weight: bold;">
+									<t t-esc="total_bags"/>
+								</td>
+								<td style="border: 1px solid black;"></td>
+								<td style="border: 1px solid black; padding: 5px; font-weight: bold;">
+									<t t-esc="total_weight"/>
+								</td>
+
+							</tr>
+						</tbody>
+					</table>
+
+
+					<div style="margin-top: 20px;">
+						<p><strong><span t-field="res_company.name"/></strong></p>
+                        <table width="100%">
+                            <tr>
+                                <td style="width: 50%;">
+                                   <strong>Postal Address:</strong>
+                                </td>
+								<td style="width: 50%;">
+                                   Telephone: <span t-field="res_company.phone"/>
+                                </td>
+                            </tr>
+							<tr>
+                                <td style="width: 50%;">
+                                   <span t-field="res_company.street"/>
+                                </td>
+                                <td style="width: 50%;">
+                                   <strong>Fax:</strong>
+                                </td>
+                            </tr>
+							<tr>
+                                <td style="width: 50%;">
+                                   <span t-field="res_company.city"/>, <span t-field="res_company.country_id.name"/>
+                                </td>
+                                <td style="width: 50%;">
+                                   <strong>Website:</strong><span t-field="res_company.website"/>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+				</div>
+			</t>
+			</t>
+	</template>
+
+    <!-- Report Action -->
+    <record id="action_report_acknolegment_report_bey_id_card" model="ir.actions.report">
+        <field name="name">Estates Acknowledgement DOC</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">estates_customs.report_sales_aknowledgement_template</field>
+        <field name="print_report_name">"Sales Acknowledgement - %s" % object.name</field>
+        <field name="binding_model_id" ref="model_sale_order"/>
+		<field name="paperformat_id" ref="estates_customs.report_estates_paperformat_a4_portrait"/>
+    </record>
+
+
+</odoo>

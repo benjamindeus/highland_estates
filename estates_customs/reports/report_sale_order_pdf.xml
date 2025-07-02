@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<template id="report_sale_order_pdf">
+    <t t-call="web.html_container">
+       <t t-foreach="docs" t-as="doc">
+            <div class="page">
+                <h2>Sales Report</h2>
+                <p><strong>Date Range:</strong> <span t-esc="data.filters.date_from"/> to <span t-esc="data.filters.date_to"/></p>
+                <p><strong>Salesperson:</strong> <span t-esc="data.filters.user"/></p>
+                <p><strong>Customer:</strong> <span t-esc="data.filters.partner"/></p>
+                <t t-set="line_number" t-value="0"/>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Line Number</th>
+                            <th>Product</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Sales Order</th>
+                            <th>Unit Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="data.lines" t-as="line">
+                            <tr>
+                                <td><span t-esc="line.product"/></td>
+                                <td><span t-esc="line.date"/></td>
+                                <td><span t-esc="line.customer"/></td>
+                                <td><span t-esc="line.order"/></td>
+                                <td class="text-right"><span t-esc="line.unit_price"/></td>
+                                <td class="text-right"><span t-esc="line.total"/></td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+            </div>
+        </t>
+    </t>
+</template>
+
+<record id="action_report_sale_order_pdf" model="ir.actions.report">
+    <field name="name">Sales Report</field>
+    <field name="model">sale.order</field>
+    <field name="report_type">qweb-pdf</field>
+    <field name="report_name">estates_customs.report_sale_order_pdf</field>
+	<field name="paperformat_id" ref="estates_customs.report_estates_paperformat_a4_portrait"/>
+</record>
+
+
+
+</odoo>

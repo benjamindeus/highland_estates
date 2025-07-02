@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_estate_sales_report_wizard,access_estate_sales_report_wizard_name,model_sale_report_wizard,base.group_user,1,1,1,1
+access_estate_create_invoice_from_delivery_wizard,access_estate_create_invoice_from_delivery_name,model_create_invoice_from_delivery,base.group_user,1,1,1,1
