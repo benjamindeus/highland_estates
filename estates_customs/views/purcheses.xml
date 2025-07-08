@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+	<record id="view_estates_purchase_order_form_inherit_warehouse" model="ir.ui.view">
+		<field name="name">purchase.order.form.inherit.warehouse</field>
+		<field name="model">purchase.order</field>
+		<field name="inherit_id" ref="purchase.purchase_order_form"/>
+		<field name="arch" type="xml">
+			<xpath expr="//field[@name='picking_type_id']" position="after">
+				<button name="action_recompute_prices_from_warehouse"
+					type="object"
+					string="Recompute Prices"
+					class="btn-primary"
+					invisible = "state != 'draft'"/>
+			</xpath>
+		</field>
+	</record>
+
+	<record id="view_product_pricelists_estates_form_inherit_pricelist" model="ir.ui.view">
+		<field name="name">product.pricelist.form.form.inherit.pricelist</field>
+		<field name="model">product.pricelist</field>
+		<field name="inherit_id" ref="product.product_pricelist_view"/>
+		<field name="arch" type="xml">
+			<xpath expr="//field[@name='company_id']" position="after">
+				<field name="warehouse_id" required="1"/>
+
+			</xpath>
+		</field>
+	</record>
+	<record id="view_product_pricelists_estates_list_inherit_pricelist" model="ir.ui.view">
+		<field name="name">product.pricelist.list.inherit.pricelist</field>
+		<field name="model">product.pricelist</field>
+		<field name="inherit_id" ref="product.product_pricelist_view_tree"/>
+		<field name="arch" type="xml">
+			<xpath expr="//field[@name='company_id']" position="after">
+				<field name="warehouse_id" required="1"/>
+
+			</xpath>
+		</field>
+	</record>
+
+	<record id="view_pricelist_item_form_inherit_estates_purchase_price" model="ir.ui.view">
+        <field name="name">product.pricelist.item.form.inherit.purchase.price</field>
+        <field name="model">product.pricelist.item</field>
+        <field name="inherit_id" ref="product.product_pricelist_item_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='price']" position="after">
+				<group>
+					<field name="purchase_price" />
+				</group>
+            </xpath>
+		</field>
+    </record>
+
+    <record id="view_pricelist_item_tree_inherit_estates_purchase_price" model="ir.ui.view">
+        <field name="name">product.pricelist.item.tree.inherit.purchase.price</field>
+        <field name="model">product.pricelist.item</field>
+        <field name="inherit_id" ref="product.product_pricelist_item_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='price']" position="after">
+				<field name="purchase_price" />
+            </xpath>
+		</field>
+    </record>
+</odoo>

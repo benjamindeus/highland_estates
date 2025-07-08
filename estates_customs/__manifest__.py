@@ -1,5 +1,5 @@
 {
-    'name': 'Highland Estates',
+    'name': 'Estates Odoo 18 Modifications',
     'version': '1.1',
     'category': 'Accounting',
     'summary': 'Estates Odoo 18 Modifications',
@@ -18,6 +18,8 @@
         "views/sale_order_views.xml",
         "views/sale_report_wizard_views.xml",
         "views/sale_advance_payment_inv_views.xml",
+
+        "views/purcheses.xml",
 
         # "wizard/create_invoice_from_delivery_wizard_views.xml",
 

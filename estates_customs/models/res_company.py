@@ -7,7 +7,8 @@ class ResCompany(models.Model):
     vfd_authorization_header = fields.Char(string="VFD Authorization Header",required=True,default='Bearer 6b2927d40ed8eba9d030f5308efee7ee7a34e760')
 
     # Company Approvals
-    approved_level1_by = fields.Many2many('res.users', 'res_company_approved_level1_by_rel',
+    approved_level1_by = fields.Many2many('res.users',
+                                          'res_company_approved_level1_by_rel',
                                    'company_id', 'a_user_id', string='Approver 1')
 
     approved_level2_by = fields.Many2many('res.users', 'res_company_approved_level2_by_rel',
@@ -16,3 +17,9 @@ class ResCompany(models.Model):
                                    'company_id', 'a_user_id', string='Last Approver')
     posted_by = fields.Many2many('res.users', 'res_company_posted_by_rel',
                                    'company_id', 'a_user_id', string='To Post')
+
+    # who to print the delivery note and picking list
+    can_print_picking_list = fields.Many2many('res.users', 'res_company_can_print_picking_rel',
+                                   'company_id', 'a_user_id', string='Stock WH Admin',help="Can print many stock docs")
+    can_print_sales_acknowledge_list = fields.Many2many('res.users', 'res_company_can_print_acknowledge_rel',
+                                   'company_id', 'a_user_id', string='Can Print Sales Acknowled list')

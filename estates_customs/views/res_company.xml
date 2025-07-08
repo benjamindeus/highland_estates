@@ -26,6 +26,10 @@
                           <field name="last_approver" widget="many2many_tags" required="1"/>
                           <field name="posted_by" widget="many2many_tags" required="1"/>
                         </group>
+                        <group string="Can Print Reports">
+                            <field name="can_print_picking_list" widget="many2many_tags" required="1"/>
+                            <field name="can_print_sales_acknowledge_list" widget="many2many_tags" required="1"/>
+                        </group>
                     </group>
                 </page>
 
