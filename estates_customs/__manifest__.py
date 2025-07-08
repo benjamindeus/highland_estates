@@ -19,6 +19,8 @@
         "views/sale_report_wizard_views.xml",
         "views/sale_advance_payment_inv_views.xml",
 
+        "views/purcheses.xml",
+
         # "wizard/create_invoice_from_delivery_wizard_views.xml",
 
         "reports/report_invoice.xml",
@@ -34,3 +36,5 @@
     'auto_install': False,
     'application': True,
 }
+
+# this is new on 9 Jully 2025

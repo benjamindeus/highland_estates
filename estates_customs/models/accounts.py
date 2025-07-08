@@ -11,6 +11,13 @@ import json
 from urllib.request import urlopen
 class AccountMove(models.Model):
     _inherit = 'account.move'
+    def unlink(self):
+        for move in self:
+            if move.vfd_receipt_no or move.tra_qrcode_url:
+                raise UserError(_(
+                    "You cannot delete this record because it has a VFD Receipt Number and a TRA QR Code assigned."
+                ))
+        return super(AccountMove, self).unlink()
     # new fields
     picking_id = fields.Many2one('stock.picking', string='Delivery Note',tracking=True,
                                  domain=[('state', '=', 'done')], copy=False)

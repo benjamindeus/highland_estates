@@ -34,8 +34,20 @@
 						class="btn-danger"/>
 			</xpath>
 			<xpath expr="//field[@name='date_order']" position="after">
-				<field name="lpo_number"/>
+				<field name="lpo_number" placeholder='LPO/565..' required="state in ['draft']"/>
+				<field name="warehouse_id" options="{'no_create': True}" force_save="1" readonly="1"/>
 				<field name="approval_status" readonly="1" widget="badge"/>
+				<separator string="Attachments"/>
+				<field name="lpo_attachment_ids"
+					   widget="many2many_binary"
+					   options="{'filename_field': 'display_name'}"
+				/>
+
+				<field name="payment_slip_attachment_ids"
+					   widget="many2many_binary"
+					   options="{'filename_field': 'display_name'}"
+				/>
+				<separator string="End Of Attachments"/>
 
             </xpath>
 			<xpath expr="//notebook" position="inside">
@@ -73,27 +85,9 @@
 <!--                     invisible="state != 'done' or invoice_id != False" class="btn-primary"/> -->
             	<button name="print_loading_instruction" string="Print Loading Instruction"
 						type="object" class="btn btn-primary fa fa-print"/>
-
-
-				<button name="action_request_approval"
-						string="Request For Approval"
-						type="object"
-						invisible ="approval_status != 'draft'"
-						class="btn-primary"/>
-				<button name="action_approve"
-						string="Verify And Approve"
-						type="object"
-						invisible ="approval_status in ['draft','approved','rejected']"
-						class="btn-primary"/>
-				<button name="action_reset_to_draft"
-						string="Reset to Draft"
-						type="object"
-						invisible ="approval_status != 'rejected'"
-						class="btn-danger"/>
         	</xpath>
 			<xpath expr="//field[@name='origin']" position="after">
 				<field name="lpo_number"/>
-				<field name="approval_status" readonly="1" widget="badge"/>
 
             </xpath>
 
@@ -125,19 +119,6 @@
 							<field name="loading_pattern" placeholder="Loading Pattern"/>
 						</group>
 					</group>
-				</page>
-				<page string="Approvals">
-					<group string="Approvals">
-						<group>
-							<field name="current_approver_id" />
-							<field name="level1_approved_by" />
-							<field name="level2_approved_by" />
-							<field name="level3_approved_by"/>
-							<field name="reject_reason" readonly="1"/>
-						</group>
-						<group></group>
-					</group>
-
 				</page>
 			</xpath>
 		</field>
