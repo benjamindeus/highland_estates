@@ -1,9 +1,9 @@
 {
-    'name': 'Estates Odoo 18 Modifications',
+    'name': 'HighlandEstates Automation',
     'version': '1.1',
     'category': 'Accounting',
-    'summary': 'Estates Odoo 18 Modifications',
-    'description': 'Estates Odoo 18 Modifications',
+    'summary': 'HighlandEstates Automation',
+    'description': 'HighlandEstates Automation',
     'author': 'Bey Technologies Limited',
     'company': 'Bey Technologies Limited',
     'maintainer': 'Bey Technologies Limited',
