@@ -12,8 +12,19 @@
 					class="btn-primary"
 					invisible = "state != 'draft'"/>
 			</xpath>
+			<xpath expr="//field[@name='order_line']//list//field[@name='price_unit']" position="attributes">
+				<attribute name="readonly">1</attribute>
+			</xpath>
 		</field>
 	</record>
+
+<!-- 	                <xpath expr="//field[@name='is_favorite']" position="attributes"> -->
+<!--                     <attribute name="readonly">1</attribute> -->
+<!--                 </xpath> -->
+<!--                 <field name="list_price" position="attributes"> -->
+<!--                    <attribute name="invisible">1</attribute> -->
+<!--                    <attribute name="readonly">product_variant_count &gt; 1</attribute> -->
+<!--                 </field> -->
 
 	<record id="view_product_pricelists_estates_form_inherit_pricelist" model="ir.ui.view">
 		<field name="name">product.pricelist.form.form.inherit.pricelist</field>
@@ -23,6 +34,9 @@
 			<xpath expr="//field[@name='company_id']" position="after">
 				<field name="warehouse_id" required="1"/>
 
+			</xpath>
+			<xpath expr="//field[@name='item_ids']//list//field[@name='price']" position="after">
+				<field name="purchase_price" />
 			</xpath>
 		</field>
 	</record>
@@ -43,10 +57,8 @@
         <field name="model">product.pricelist.item</field>
         <field name="inherit_id" ref="product.product_pricelist_item_form_view"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='price']" position="after">
-				<group>
+            <xpath expr="//field[@name='min_quantity']" position="after">
 					<field name="purchase_price" />
-				</group>
             </xpath>
 		</field>
     </record>
@@ -54,11 +66,21 @@
     <record id="view_pricelist_item_tree_inherit_estates_purchase_price" model="ir.ui.view">
         <field name="name">product.pricelist.item.tree.inherit.purchase.price</field>
         <field name="model">product.pricelist.item</field>
-        <field name="inherit_id" ref="product.product_pricelist_item_tree_view"/>
+        <field name="inherit_id" ref="product.product_pricelist_item_tree_view_from_product"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='price']" position="after">
-				<field name="purchase_price" />
+            <xpath expr="//field[@name='fixed_price']" position="before">
+				<field name="purchase_price"  widget="monetary" string="Purchese Price" options="{'currency_field': 'currency_id', 'field_digits': True}" required="1"/>
             </xpath>
 		</field>
     </record>
+	<record id="purchase_order_line_inherit_estates_readonly_price_unit" model="ir.ui.view">
+		<field name="name">purchase.order.line.inherit.readonly.price</field>
+		<field name="model">purchase.order.line</field>
+		<field name="inherit_id" ref="purchase.purchase_order_line_tree"/>
+		<field name="arch" type="xml">
+			<xpath expr="//field[@name='price_unit']" position="attributes">
+				<attribute name="readonly">1</attribute>
+			</xpath>
+		</field>
+	</record>
 </odoo>

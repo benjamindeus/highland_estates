@@ -16,10 +16,19 @@ class ResCompany(models.Model):
     last_approver = fields.Many2many('res.users', 'res_company_approved_last_by_rel',
                                    'company_id', 'a_user_id', string='Last Approver')
     posted_by = fields.Many2many('res.users', 'res_company_posted_by_rel',
-                                   'company_id', 'a_user_id', string='To Post')
+                                   'company_id', 'a_user_id', string='Finance To Post')
 
     # who to print the delivery note and picking list
     can_print_picking_list = fields.Many2many('res.users', 'res_company_can_print_picking_rel',
                                    'company_id', 'a_user_id', string='Stock WH Admin',help="Can print many stock docs")
     can_print_sales_acknowledge_list = fields.Many2many('res.users', 'res_company_can_print_acknowledge_rel',
                                    'company_id', 'a_user_id', string='Can Print Sales Acknowled list')
+
+    # people who receives notifications
+    to_be_notified = fields.Many2many('res.users',
+                                          'res_company_to_be_notified_by_rel',
+                                   'company_id', 'notified_user_id', string='To Be Notified')
+
+    can_create_purchases = fields.Many2many('res.users',
+                                          'res_company_to_be_createpurchases_rel',
+                                   'company_id', 'purchases_user_id', string='Can Create Purchases')

@@ -1,35 +1,6 @@
 from odoo import models, api, fields, _
-
-
-class ProductPricelistItem(models.Model):
-    _inherit = 'product.pricelist.item'
-
-    purchase_price = fields.Float(
-        string='Purchase Price',
-        digits='Product Price',
-        help="Price used for purchases if this pricelist is used in a supplier or warehouse"
-    )
-
-    def _compute_price(self, product, quantity, uom, date=False, **kwargs):
-        if not self:
-            # Return 0 if item is empty
-            return 0.0
-
-        self.ensure_one()
-
-        if uom and uom != product.uom_id:
-            quantity = uom._compute_quantity(quantity, product.uom_id)
-
-        price = self.purchase_price or self.fixed_price
-        if not price:
-            return super()._compute_price(product, quantity, uom, date=date, **kwargs)
-
-        if uom and uom != product.uom_id:
-            price = product.uom_id._compute_price(price, uom)
-
-        return price
-
-
+from odoo.exceptions import UserError
+import html
 
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
@@ -59,16 +30,6 @@ class PurchaseOrder(models.Model):
 
                 line.price_unit = price
 
-        # ✅ return after all lines processed
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': 'Success',
-                'message': 'All line prices updated from warehouse pricelist.',
-                'sticky': False,
-            }
-        }
     @api.model
     def _get_price_from_warehouse_pricelist(self, product, qty, uom, warehouse_id):
         """Get purchase price for product from warehouse-specific pricelist"""
@@ -84,74 +45,114 @@ class PurchaseOrder(models.Model):
             product, qty, uom=uom, warehouse=warehouse
         )
 
+    def _send_new_po_notification_email(self):
+        """Send email notification to selected users when a new PO is created."""
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        company = self.company_id
+        users = company.to_be_notified
+        for user in users:
+            if not user.partner_id.email:
+                continue
 
-class ProductPricelist(models.Model):
-    _inherit = 'product.pricelist'
-    warehouse_id = fields.Many2one(
-        'stock.warehouse',
-        string='Warehouse',
+            po_url = f"{base_url}/web#id={self.id}&model=purchase.order&view_type=form"
+            po_link = f'<a href="{po_url}">Open Purchase Order</a>'
 
-    )
-    def _get_pricelist_items(self, product, qty=False, uom=False, date=False):
-        """Helper to get relevant pricelist items for a product"""
-        self.ensure_one()
-        domain = [('pricelist_id', '=', self.id)]
+            email_values = {
+                'subject': _('New Purchase Order Created: %s') % self.name,
+                'body_html': """
+                    <p>Hello %s,</p>
+                    <p>A new Purchase Order <strong>%s</strong> has been created.</p>
+                    <p>
+                        <strong>Vendor:</strong> %s<br/>
+                        <strong>Total:</strong> %s<br/>
+                        <strong>Created by:</strong> %s<br/>
+                        %s
+                    </p>
+                    <p>Regards,<br/>Your Odoo System</p>
+                """ % (
+                    html.escape(user.name),
+                    html.escape(self.name),
+                    html.escape(self.partner_id.name or ''),
+                    self.amount_total,
+                    html.escape(self.create_uid.name),
+                    po_link
+                ),
+                'email_to': user.partner_id.email,
+                'auto_delete': True,
+                'email_from': self.env.user.email or 'no-reply@yourcompany.com',
+            }
 
-        # Specific variant
-        variant_items = self.env['product.pricelist.item'].search(domain + [
-            ('applied_on', '=', '0_product_variant'),
-            ('product_id', '=', product.id),
-        ])
-
-        # General product template
-        template_items = self.env['product.pricelist.item'].search(domain + [
-            ('applied_on', '=', '1_product'),
-            ('product_tmpl_id', '=', product.product_tmpl_id.id),
-        ])
-
-        return variant_items | template_items
+            self.env['mail.mail'].create(email_values).send()
 
     @api.model
-    def _get_product_price(self, product, qty, uom=None, date=False, **kwargs):
-        """
-        Get product price considering purchase_price and warehouse
-        """
-        if not uom:
-            uom = product.uom_id
+    def create(self, vals):
+        user = self.env.user
+        allowed_users = user.company_id.can_create_purchases
 
-        # Base price from parent method (used as fallback)
-        price = super()._get_product_price(product, qty, uom=product.uom_id, date=date, **kwargs)
-        items = self._get_pricelist_items(product, qty, uom, date)
-        item = items[0] if items else None
-        if item:
-            try:
-                price = item._compute_price(product, qty, uom, date)
-            except Exception:
-                price = product.standard_price
-
-        # ✅ Fixed conversion back to requested uom
-        return product.uom_id._compute_price(price, uom)
+        if user not in allowed_users:
+            allowed_user_names = ', '.join(allowed_users.mapped('name')) or 'No users allowed'
+            raise UserError(_(
+                "You are not allowed to create Purchase Orders.\n\n"
+                "Only the following users can create purchases:\n%s"
+            ) % allowed_user_names)
+        record = super().create(vals)
+        # Send email after record is successfully created
+        record._send_new_po_notification_email()
+        return record
 
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
-    @api.onchange('product_id', 'product_qty', 'product_uom')
-    def onchange_product_id_get_price_by_warehouse(self):
+
+    @api.depends('product_uom', 'product_qty', 'product_id.uom_id')
+    def _compute_product_uom_qty(self):
+        for line in self:
+            # Compute the product_uom_qty
+            if line.product_id and line.product_id.uom_id != line.product_uom:
+                line.product_uom_qty = line.product_uom._compute_quantity(line.product_qty, line.product_id.uom_id)
+            else:
+                line.product_uom_qty = line.product_qty
+
+            # Set price from warehouse pricelist
+            warehouse = line.order_id.picking_type_id.warehouse_id
+            if line.product_id and warehouse:
+                pricelist = line.env['product.pricelist'].sudo().search([('warehouse_id', '=', warehouse.id)], limit=1)
+                if pricelist:
+                    price = pricelist._get_product_price(
+                        line.product_id,
+                        line.product_qty,
+                        uom=line.product_uom,
+                        warehouse=warehouse,
+                        active_model='purchase.order',
+                    )
+                    line.price_unit = price
+                else:
+                    line.price_unit = line.product_id.standard_price
+            elif line.product_id:
+                line.price_unit = line.product_id.standard_price
+
+    @api.onchange('product_id', 'product_qty', 'product_uom', 'order_id.picking_type_id')
+    def onchange_product_id_warehouse_notify_missing_price(self):
         if not self.product_id:
             return
 
         warehouse = self.order_id.picking_type_id.warehouse_id
         if warehouse:
-            pricelist_id = self.env['product.pricelist'].sudo().search([('warehouse_id','=',warehouse.id)],limit=1)
-            if pricelist_id:
-                self.price_unit = pricelist_id._get_product_price(
-                    self.product_id,
-                    self.product_qty,
-                    uom=self.product_uom,
-                    warehouse=warehouse  # <-- Important!
-                )
+            pricelist = self.env['product.pricelist'].sudo().search([('warehouse_id', '=', warehouse.id)], limit=1)
+            if pricelist:
+                items = pricelist._get_pricelist_items(self.product_id)
+                if not items:
+                    return {
+                        'warning': {
+                            'title': _('Missing Price'),
+                            'message': _('This product is not listed in the pricelist assigned to the warehouse: %s') % warehouse.display_name
+                        }
+                    }
             else:
-                self.price_unit = self.product_id.standard_price
-        else:
-            self.price_unit = self.product_id.standard_price
+                return {
+                    'warning': {
+                        'title': _('No Pricelist Found'),
+                        'message': _('No pricelist is assigned to the selected warehouse.')
+                    }
+                }
 

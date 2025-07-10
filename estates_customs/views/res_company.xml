@@ -30,6 +30,12 @@
                             <field name="can_print_picking_list" widget="many2many_tags" required="1"/>
                             <field name="can_print_sales_acknowledge_list" widget="many2many_tags" required="1"/>
                         </group>
+                        <group string="To Be Notified">
+                            <field name="to_be_notified" widget="many2many_tags" required="1"/>
+                        </group>
+                        <group string="Can Create Purchases">
+                            <field name="can_create_purchases" widget="many2many_tags" required="1"/>
+                        </group>
                     </group>
                 </page>
 

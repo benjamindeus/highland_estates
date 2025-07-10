@@ -1,8 +1,67 @@
 from odoo import models, fields, api, _, osv
 from odoo.exceptions import RedirectWarning, UserError, ValidationError
-
+import html
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
+
+    @api.model
+    def create(self, vals):
+        user = self.env.user
+        allowed_users = user.company_id.approved_level1_by
+
+        if user not in allowed_users:
+            allowed_user_names = ', '.join(allowed_users.mapped('name')) or 'No users allowed'
+            raise UserError(_(
+                "You are not allowed to create Sales Orders.\n\n"
+                "Only the following users can create sales:\n%s"
+            ) % allowed_user_names)
+
+        record = super().create(vals)
+        record._send_new_so_notification_email()
+        return record
+
+    def _send_new_so_notification_email(self):
+        """Send email notification to selected users when a new Sales Order is created."""
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        company = self.company_id
+        users = company.to_be_notified
+
+        for user in users:
+            if not user.partner_id.email:
+                continue
+
+            so_url = f"{base_url}/web#id={self.id}&model=sale.order&view_type=form"
+            so_link = f'<a href="{so_url}">Open Sales Order</a>'
+
+            email_values = {
+                'subject': _('New Sales Order Created: %s') % self.name,
+                'body_html': """
+                        <p>Hello %s,</p>
+                        <p>A new Sales Order <strong>%s</strong> has been created.</p>
+                        <p>
+                            <strong>Customer:</strong> %s<br/>
+                            <strong>Total:</strong> %s<br/>
+                            <strong>Created by:</strong> %s<br/>
+                            %s
+                        </p>
+                        <p>Regards,<br/>Your Odoo System</p>
+                    """ % (
+                    html.escape(user.name),
+                    html.escape(self.name),
+                    html.escape(self.partner_id.name or ''),
+                    self.amount_total,
+                    html.escape(self.create_uid.name),
+                    so_link
+                ),
+                'email_to': user.partner_id.email,
+                'auto_delete': True,
+                'email_from': self.env.user.email or 'no-reply@yourcompany.com',
+            }
+
+            self.env['mail.mail'].create(email_values).send()
+
+
+
     def _get_share_url(self):
         """Generate a shareable URL for this sales order"""
         self.ensure_one()
@@ -371,7 +430,9 @@ class StockPicking(models.Model):
         url = f"{base_url}/web#id={self.id}&model=stock.picking&view_type=form"
         return url
 
-
+    custom_return = fields.Boolean(string='Is Return Order', default=False)
+    reason_for_return = fields.Char(string='Reason for Return', default=False)
+    return_date = fields.Date(string='Return Date', default=False)
     invoice_id = fields.Many2one('account.move', string='Linked Invoice',
                                  copy=False)
 
@@ -413,33 +474,79 @@ class StockPicking(models.Model):
                                                            email_values=email_values,force_send=True)
 
 
+    def _send_quotation_request_email_to_finance(self):
+        """Notify finance team that a quotation is needed for a specific Sale Order."""
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        company = self.company_id
+        finance_team = company.posted_by  # You should define this M2M field in res.company
 
+        for user in finance_team:
+            if not user.partner_id.email:
+                continue
+
+            sale_order_url = f"{base_url}/web#id={self.sale_id.id}&model=sale.order&view_type=form"
+            link = f'<a href="{sale_order_url}">View Sale Order</a>'
+
+            email_values = {
+                'subject': _('Quotation Needed for Sale Order: %s') % self.sale_id.name,
+                'body_html': """
+                    <p>Hello %s,</p>
+                    <p>A quotation is required for the Sale Order <strong>%s</strong>.</p>
+                    <p>
+                        <strong>Customer:</strong> %s<br/>
+                        <strong>Total:</strong> %s<br/>
+                        <strong>Created by:</strong> %s<br/>
+                        %s
+                    </p>
+                    <p>Please take necessary action.</p>
+                    <p>Regards,<br/>Your Odoo System</p>
+                """ % (
+                    html.escape(user.name),
+                    html.escape(self.sale_id.name),
+                    html.escape(self.sale_id.partner_id.name or ''),
+                    self.sale_id.amount_total,
+                    html.escape(self.sale_id.create_uid.name),
+                    link
+                ),
+                'email_to': user.partner_id.email,
+                'auto_delete': True,
+                'email_from': self.env.user.email or 'no-reply@yourcompany.com',
+            }
+
+            self.env['mail.mail'].create(email_values).send()
 
     def button_validate(self):
         """ Override to create invoice after delivery is validated """
         res = super().button_validate()
         company = self.company_id
+
+
+
         allowed_users = company.can_print_picking_list.ids
         # check if previously delivery note has been created with the invoice
-        so_pending = self.env['stock.picking'].sudo().search(
-            [
-                ('sale_id','=',self.sale_id.id),
-                ('invoice_id', '=',False),
+        if self.sale_id and  not self.custom_return:
+            self._send_quotation_request_email_to_finance()
+            so_pending = self.env['stock.picking'].sudo().search([
+                ('sale_id', '=', self.sale_id.id),
+                ('invoice_id', '=', False),
                 ('id', '!=', self.id),
-                ('state', '=', 'done')
+                ('custom_return', '=', False),
+                ('state', '=', 'done'),
+                ('picking_type_id.code', '=', 'outgoing'),  # <-- Only outgoing shipments
+            ])
 
-             ]
-        )
-        if so_pending:
-            raise ValidationError(_("You can not applove other order, because we have pending invoice which is not generated please notify finance department before proceeding!!"))
+            if so_pending:
+                raise ValidationError(_(
+                    "You cannot approve this order because there are completed outgoing shipments without invoices.\n"
+                    "Please notify the finance department before proceeding!"
+                ))
+            if self.env.user.id not in allowed_users:
+                raise UserError(_("Your Not authorised to approve this order"))
+            # Proceed only if auto-invoicing is enabled
+            # if self.env.context.get('create_invoice_on_delivery'):
+            #     self._create_invoice_from_delivery()
 
-        if self.env.user.id not in allowed_users:
-            raise UserError(_("Your Not authorised to approve this order"))
-        # Proceed only if auto-invoicing is enabled
-        if self.env.context.get('create_invoice_on_delivery'):
-            self._create_invoice_from_delivery()
-
-        return res
+            return res
 
     def _create_invoice_from_delivery(self):
         """ Call sales order's invoice creation method with this delivery """
@@ -468,18 +575,18 @@ class StockPicking(models.Model):
                 ('id', '!=', picking.id)
             ]):
                 raise ValidationError("This delivery note is already linked to another invoice.")
-    def action_open_invoice_wizard(self):
-        self.ensure_one()
-        return {
-            'name': 'Create Invoice from Delivery',
-            'type': 'ir.actions.act_window',
-            'res_model': 'create.invoice.from.delivery',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_picking_ids': [(6, 0, [self.id])]
-            }
-        }
+    # def action_open_invoice_wizard(self):
+    #     self.ensure_one()
+    #     return {
+    #         'name': 'Create Invoice from Delivery',
+    #         'type': 'ir.actions.act_window',
+    #         'res_model': 'create.invoice.from.delivery',
+    #         'view_mode': 'form',
+    #         'target': 'new',
+    #         'context': {
+    #             'default_picking_ids': [(6, 0, [self.id])]
+    #         }
+    #     }
 
     supervisor_id = fields.Many2one('res.users', string='Supervisor',placeholder='Supervisor')
     driver_name = fields.Char(string='Driver Name',placeholder='Driver Name')
